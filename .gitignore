@@ -3,6 +3,7 @@
 *.pyc
 .DS_Store
 .directory
+/out/
 /WebKitBuild/
 /test262-results/
 autoinstall.cache.d

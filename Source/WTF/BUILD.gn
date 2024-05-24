@@ -1,0 +1,3 @@
+group("WTF") {
+  deps = [ "wtf" ]
+}
