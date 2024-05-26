@@ -336,6 +336,7 @@ is_posix = !is_win && !is_fuchsia
 # Holds all configs used for running the compiler.
 default_compiler_configs = [
   "//build/config:feature_flags",
+  "//build/config:common",
   "//build/config/compiler:afdo",
   "//build/config/compiler:afdo_optimize_size",
   "//build/config/compiler:cet_shadow_stack",

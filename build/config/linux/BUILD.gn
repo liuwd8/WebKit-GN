@@ -57,14 +57,12 @@ config("libresolv") {
 if (use_glib) {
   pkg_config("glib") {
     packages = [
+      "gio-2.0",
+      "gio-unix-2.0",
       "glib-2.0",
       "gmodule-2.0",
       "gobject-2.0",
       "gthread-2.0",
-    ]
-    defines = [
-      "GLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_56",
-      "GLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_56",
     ]
   }
 }

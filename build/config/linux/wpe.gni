@@ -1,0 +1,31 @@
+import("//build/config/linux/linux.gni")
+
+declare_args() {
+  # Whether to enable support for DRM platform
+  enable_wpe_platform_drm = true
+
+  # Whether to enable support for headless platform
+  enable_wpe_platform_headless = true
+
+  # Whether to enable support for Wayland platform
+  enable_wpe_platform_wayland = true
+
+  # Whether to enable support for the Qt5/QML plugin
+  enable_wpe_qt_api = is_debug
+
+  # Whether to build WPE 1.1 instead of WPE 2.0
+  enable_wpe_1_1_api = false
+
+  # Whether to enable usage of ATK.
+  use_atk = true
+
+  # Whether to enable external holepunch
+  use_external_holepunch = false
+
+  # Whether to enable ANGLE implementation with GBM
+  use_angle_gbm = false
+}
+
+if (use_soup2) {
+  assert(!enable_wpe_1_1_api)
+}

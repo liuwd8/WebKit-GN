@@ -1,0 +1,458 @@
+# Copyright 2014 The Chromium Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# =============================================
+#   PLEASE DO NOT ADD MORE FLAGS TO THIS FILE
+# =============================================
+#
+# These flags are effectively global. Your feature flag should go near the
+# code it controls. Most of these items are here now because they control
+# legacy global #defines passed to the compiler (now replaced with generated
+# buildflag headers -- see //build/buildflag_header.gni).
+#
+# There is more advice on where to put build flags in the "Build flag" section
+# of //build/config/BUILDCONFIG.gn.
+
+import("//build/config/linux/gtk/gtk.gni")
+import("//build/config/linux/linux.gni")
+
+declare_args() {
+  # Toggle JustInTime JavaScript support
+  enable_jit = target_cpu == "arm64" || target_cpu == "x64" ||
+               target_cpu == "riscv64" || (target_cpu == "arm" && is_linux)
+
+  # Enable experimental features
+  enable_experimental_features = false
+
+  # Enable CLoop interpreter
+  enable_c_loop = (is_win && target_cpu == "x86") ||
+                  (use_64kb_page_block && target_cpu != "arm64") ||
+                  (is_linux && target_cpu == "mips")
+
+  # Toggle WebAssembly BBQ JIT support
+  enable_webassembly_bbqjit =
+      target_cpu == "arm64" || target_cpu == "x64" || target_cpu == "riscv64"
+}
+
+declare_args() {
+  # Toggle accessibility isolated tree support
+  enable_accessibility_isolated_tree = false
+
+  # Enable public API unit tests
+  enable_api_tests = false
+
+  # Toggle Apple Pay support
+  enable_apple_pay = false
+
+  # Toggle Application Manifest support
+  enable_application_manifest = false
+
+  # Enable asynchronous scrolling
+  enable_async_scrolling = use_gtk
+
+  # Toggle Attachment Element support
+  enable_attachment_element = false
+
+  # Toggle autocapitalize support
+  enable_autocapitalize = use_gtk
+
+  # Toggle AVFoundation caption support
+  enable_avf_captions = false
+
+  # Toggle breakpad minidump support.
+  enable_breakpad = false
+
+  # Toggle Bubblewrap sandboxing support
+  enable_bubblewrap_sandbox = false
+
+  # Toggle cache partitioning support
+  enable_cache_partitioning = false
+
+  # Toggle Cog browser compilation.
+  enable_cog = false
+
+  # Toggle Content Extensions support
+  enable_content_extensions = use_gtk
+
+  # Toggle content filtering support
+  enable_content_filtering = false
+
+  # Toggle Context Menu support
+  enable_context_menus = true
+
+  # Toggle cursor visibility support
+  enable_cursor_visibility = use_gtk
+
+  # Toggle Dark Mode CSS support
+  enable_dark_mode_css = use_gtk
+
+  # Toggle datacue value support
+  enable_datacue_value = false
+
+  # Toggle Datalist Element support
+  enable_datalist_element = use_gtk
+
+  # Toggle Date And Time Input Types support
+  enable_date_and_time_input_types = use_gtk
+
+  # Toggle Device Orientation support
+  enable_device_orientation = false
+
+  # Toggle data flow graph JIT tier
+  enable_dfg_jit = enable_jit
+
+  # Toggle support of drag actions (including selection of text with mouse)
+  enable_drag_support = use_gtk
+
+  # Toggle EME V3 support
+  enable_encrypted_media = use_gtk && enable_experimental_features
+
+  # Toggle FTL JIT support
+  enable_ftl_jit = enable_jit
+
+  # Toggle FTP Directory support
+  enable_ftpdir = !use_gtk
+
+  # Toggle Fullscreen API support
+  enable_fullscreen_api = true
+
+  # Toggle Gamepad support
+  enable_gamepad = use_gtk
+
+  # Toggle Geolocation support
+  enable_geolocation = true
+
+  # Toggle GPU Process support
+  enable_gpu_process = false
+
+  # Toggle image diff support for layout tests
+  enable_image_diff = true
+
+  # Toggle Input Type Color support
+  enable_input_type_color = use_gtk
+
+  # Toggle Input Type Date support
+  enable_input_type_date = use_gtk
+
+  # Toggle Input Type Datetimelocal support
+  enable_input_type_datetimelocal = use_gtk
+
+  # Toggle Input Type Month support
+  enable_input_type_month = use_gtk
+
+  # Toggle Input Type Time support
+  enable_input_type_time = use_gtk
+
+  # Toggle Input Type Week support
+  enable_input_type_week = use_gtk
+
+  # Toggle inspector alternate dispatchers support
+  enable_inspector_alternate_dispatchers = false
+
+  # Toggle inspector web extensions support
+  enable_inspector_extensions = false
+
+  # Toggle inspector telemetry support
+  enable_inspector_telemetry = false
+
+  # Toggle iOS gesture events support
+  enable_ios_gesture_events = false
+
+  # Toggle iOS touch events support
+  enable_ios_touch_events = false
+
+  # Toggle layout test support (DumpRenderTree/WebkitTestRunner)
+  enable_layout_tests = false
+
+  # Toggle legacy protocol manager support
+  enable_legacy_custom_protocol_manager = false
+
+  # Toggle Legacy EME V2 support
+  enable_legacy_encrypted_media = false
+
+  # Include LLVM's instrumentation to generate profiles for PGO
+  enable_llvm_profile_generation = false
+
+  # Toggle MathML support
+  enable_mathml = true
+
+  # Toggle Media Capture support
+  enable_media_capture = false
+
+  # Toggle Media controls context menus.
+  enable_media_controls_context_menus = use_gtk
+
+  # Toggle Media Recorder support
+  enable_media_recorder = use_gtk
+
+  # Toggle Media Session support
+  enable_media_session = use_gtk
+
+  # Toggle Media Session Coordinator support
+  enable_media_session_coordinator = false
+
+  # Toggle Media Session Playlist support
+  enable_media_session_playlist = false
+
+  # Toggle Media Source support
+  enable_media_source = use_gtk
+
+  # Toggle Media Statistics support
+  enable_media_statistics = false
+
+  # Toggle Media Stream support
+  enable_media_stream = use_gtk
+
+  # Toggle Memory Sampler support
+  enable_memory_sampler = false
+
+  # Toggle MHTML support
+  enable_mhtml = use_gtk
+
+  # Toggle MiniBrowser compilation.
+  enable_minibrowser = use_gtk
+
+  # Toggle Modern Media controls.
+  enable_modern_media_controls = use_gtk
+
+  # Toggle Scaled mouse cursor support
+  enable_mouse_cursor_scale = use_gtk
+
+  # Toogle standalone navigator support
+  enable_navigator_standalone = false
+
+  # Toogle network cache speculative revalidation support
+  enable_network_cache_speculative_revalidation = use_gtk
+
+  # Toogle network cache stale-while-revalidate caching strategy
+  enable_network_cache_stale_while_revalidate = use_gtk
+
+  # Toggle Notifications support
+  enable_notifications = true
+
+  # Toggle OffscreenCanvas support
+  enable_offscreen_canvas = use_gtk && enable_experimental_features
+
+  # Toggle OffscreenCanvas in Workers support
+  enable_offscreen_canvas_in_workers = use_gtk && enable_experimental_features
+
+  # Toggle Orientation Events support
+  enable_orientation_events = false
+
+  # Toggle accelerated scrolling support
+  enable_overflow_scrolling_touch = false
+
+  # Toggle Payment Request support
+  enable_payment_request = false
+
+  # Toggle PDF documents support using PDF.js
+  enable_pdfjs = use_gtk
+
+  # Toggle PDFKit plugin support
+  enable_pdfkit_plugin = false
+
+  # Toggle periodical memory monitor support
+  enable_periodic_memory_monitor = use_gtk
+
+  # Toggle Picture-in-Picture API support
+  enable_picture_in_picture_api = false
+
+  # Toggle pointer lock support
+  enable_pointer_lock = use_gtk
+
+  # Toggle release log support
+  enable_release_log = false
+
+  # Toggle remote inspector support
+  enable_remote_inspector = true
+
+  # Toggle resource usage support
+  enable_resource_usage = false
+
+  # Toggle sampling profiler support
+  enable_sampling_profiler =
+      (use_64kb_page_block && target_cpu == "arm64") || target_cpu == "arm64" ||
+      target_cpu == "x64" || (target_cpu == "arm" && is_linux)
+
+  # Toggle sandbox extensions support
+  enable_sandbox_extensions = false
+
+  # Toggle server preconnect support
+  enable_server_preconnect = false
+
+  # Toggle service controls support
+  enable_service_controls = false
+
+  # Toggle network shareable resources support
+  enable_shareable_resource = use_gtk
+
+  # Toggle smooth scrolling
+  enable_smooth_scrolling = true
+
+  # Toggle Speech Synthesis API support
+  enable_speech_synthesis = use_gtk && enable_experimental_features
+
+  # Toggle Spellchecking support (requires Enchant)
+  enable_spellcheck = use_gtk
+
+  # Toggle telephone number detection support
+  enable_telephone_number_detection = false
+
+  # Toggle automatic text size adjustment support
+  enable_text_autosizing = false
+
+  # Toggle EME V3 Thunder support
+  enable_thunder = use_gtk
+
+  # Toggle Touch Events support
+  enable_touch_events = use_gtk
+
+  # Toggle unified builds
+  enable_unified_builds = false
+
+  # Toggle user script message handler support
+  enable_user_message_handlers = true
+
+  # Toggle variation fonts support
+  enable_variation_fonts = use_gtk
+
+  # Toggle Video support
+  enable_video = true
+
+  # Toggle Video presentation mode support
+  enable_video_presentation_mode = false
+
+  # Toggle video element fullscreen support
+  enable_video_uses_element_fullscreen = true
+
+  # Toggle WebAssembly support
+  enable_webassembly = !enable_c_loop
+
+  # Toggle WebAssembly OMG JIT support
+  enable_webassembly_omgjit = enable_webassembly_bbqjit
+
+  # Toggle WebDriver service process
+  enable_webdriver = use_gtk
+
+  # Toggle WebDriver allowing grapheme clusters to be sent as a series of characters to a single action step
+  enable_webdriver_keyboard_grapheme_clusters = false
+
+  # Toggle WebDriver keyboard interactions
+  enable_webdriver_keyboard_interactions = false
+
+  # Toggle WebDriver mouse interactions
+  enable_webdriver_mouse_interactions = false
+
+  # Toggle WebDriver touch interactions
+  enable_webdriver_touch_interactions = false
+
+  # Toggle WebDriver wheel interactions
+  enable_webdriver_wheel_interactions = false
+
+  # Toggle WebGL support
+  enable_webgl = true
+
+  # Toggle WebXR support
+  enable_webxr = false
+
+  # Toggle Web API statistics support
+  enable_web_api_statistics = use_gtk
+
+  # Toggle Web Audio support
+  enable_web_audio = true
+
+  # Toggle Web AuthN support
+  enable_web_authn = false
+
+  # Toggle WebCodecs support
+  enable_web_codecs = use_gtk
+
+  # Toggle WebRTC support
+  enable_web_rtc = use_gtk && enable_experimental_features
+
+  # Toggle wireless playback target support
+  enable_wireless_playback_target = false
+
+  # Toggle XSLT support
+  enable_xslt = true
+
+  # Toggle support for AVIF images.
+  use_avif = true
+
+  # Toggle support for image color management using libcms2
+  use_lcms = true
+
+  # Toggle IsoMalloc support
+  use_iso_malloc = true
+
+  # Toggle support for JPEG XL images
+  use_jpegxl = true
+
+  # Whether to use Skia instead of Cairo.
+  use_skia = false
+
+  # Toggle system allocator instead of WebKit's custom allocator
+  use_system_malloc =
+      is_win || use_64kb_page_block ||
+      (target_cpu != "arm64" && target_cpu != "x64" &&
+       target_cpu != "riscv64" &&
+       !((target_cpu == "arm" || target_cpu == "mips") && is_linux))
+
+  # Toggle support for WOFF2 Web Fonts through libwoff2
+  use_woff2 = true
+
+  use_skia = true
+
+  # Whether to enable support for GStreamer GL
+  use_gstreamer_gl = use_gtk
+
+  # Whether to enable support for MPEG-TS
+  use_gstreamer_mpegts = false
+
+  # Whether to enable support for static GStreamer builds
+  use_gstreamer_full = false
+
+  # Whether to enable support for GStreamer MediaRecorder backend
+  use_gstreamer_transcoder = use_gtk
+
+  # Whether to enable support for WebRTC
+  use_gstreamer_webrtc = use_gtk
+}
+
+#
+# =============================================
+#   PLEASE DO NOT ADD MORE FLAGS TO THIS FILE
+# =============================================
+#
+# See comment at the top.
+
+assert(!enable_jit || !enable_c_loop)
+assert(!enable_sampling_profiler || !enable_c_loop)
+assert(!enable_webassembly || !enable_c_loop)
+
+assert(!enable_web_rtc || enable_media_stream)
+assert(!enable_encrypted_media || enable_video)
+assert(!enable_legacy_encrypted_media || enable_video)
+assert(!enable_dfg_jit || enable_jit)
+assert(!enable_ftl_jit || enable_dfg_jit)
+assert(!enable_webassembly_bbqjit || enable_ftl_jit)
+assert(!enable_webassembly_omgjit || enable_ftl_jit)
+assert(!enable_inspector_alternate_dispatchers || enable_remote_inspector)
+assert(!enable_modern_media_controls || enable_video)
+assert(!enable_media_controls_context_menus || enable_modern_media_controls)
+assert(!enable_media_recorder || enable_media_stream)
+assert(!enable_media_session || enable_video)
+assert(!enable_media_source || enable_video)
+assert(!enable_media_stream || enable_video)
+# assert(!enable_thunder || enable_encrypted_media)
+assert(!enable_video_presentation_mode || enable_video)
+assert(!enable_video_uses_element_fullscreen || enable_video)
+assert(!enable_webxr || enable_webgl)
+
+if (use_gtk) {
+  assert(!use_gstreamer_gl || enable_video)
+  assert(!use_gstreamer_mpegts || enable_video)
+  assert(!use_gstreamer_transcoder || enable_media_recorder)
+  # assert(!use_gstreamer_webrtc || enable_web_rtc)
+}

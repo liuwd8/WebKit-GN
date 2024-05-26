@@ -1,20 +1,20 @@
+import("//build/config/linux/gtk.gni")
 import("//build/config/linux/pkg_config.gni")
+import("//build/config/ui.gni")
+import("//build/config/webkit_features.gni")
 
 config("wtf_public_config") {
   cflags = [
     "-Wno-extra-semi",
     "-Wno-header-hygiene",
-    "-include",
-    rebase_path("//Source/WTF/config.h", "$root_build_dir"),
   ]
 
-  defines = [ "USE_SYSTEM_MALLOC=1", "HAVE_LOCALTIME_R=1" ]
+  include_dirs = [ "//Source/bmalloc" ]
 }
 
 config("wtf_config") {
   include_dirs = [
     "//Source/WTF",
-    "//Source/WTF/icu",
     "//Source/WTF/wtf",
     "//Source/WTF/wtf/dtoa",
     "//Source/WTF/wtf/fast_float",
@@ -23,6 +23,7 @@ config("wtf_config") {
     "//Source/WTF/wtf/text/icu",
     "//Source/WTF/wtf/threads",
     "//Source/WTF/wtf/unicode",
+    "$root_gen_dir/build",
   ]
 }
 
@@ -289,10 +290,6 @@ component("wtf") {
     "PlatformCPU.h",
     "PlatformCallingConventions.h",
     "PlatformEnable.h",
-    "PlatformEnableCocoa.h",
-    "PlatformEnableGlib.h",
-    "PlatformEnablePlayStation.h",
-    "PlatformEnableWinCairo.h",
     "PlatformHave.h",
     "PlatformLegacy.h",
     "PlatformOS.h",
@@ -526,8 +523,6 @@ component("wtf") {
     "fast_float/simple_decimal_conversion.h",
     "generic/MainThreadGeneric.cpp",
     "generic/MemoryFootprintGeneric.cpp",
-    "generic/MemoryPressureHandlerGeneric.cpp",
-    "generic/RunLoopGeneric.cpp",
     "generic/WorkQueueGeneric.cpp",
     "persistence/PersistentCoders.cpp",
     "persistence/PersistentCoders.h",
@@ -637,6 +632,7 @@ component("wtf") {
 
   if (is_mac) {
     sources += [
+      "PlatformEnableCocoa.h",
       "cf/CFURLExtras.cpp",
       "cf/CFURLExtras.h",
       "cf/FileSystemCF.cpp",
@@ -713,10 +709,16 @@ component("wtf") {
       "posix/FileSystemPOSIX.cpp",
       "posix/OSAllocatorPOSIX.cpp",
       "posix/ThreadingPOSIX.cpp",
+      "text/unix/TextBreakIteratorInternalICUUnix.cpp",
+      "unix/LanguageUnix.cpp",
+      "unix/LoggingUnix.cpp",
+      "unix/UniStdExtrasUnix.cpp",
     ]
   }
 
   if (is_linux) {
+    sources -= [ "generic/MemoryFootprintGeneric.cpp" ]
+
     sources += [
       "glib/ChassisType.cpp",
       "glib/ChassisType.h",
@@ -736,7 +738,6 @@ component("wtf") {
       "glib/Sandbox.h",
       "glib/SocketConnection.cpp",
       "glib/SocketConnection.h",
-      "glib/URLGLib.cpp",
       "glib/WTFGType.h",
       "linux/CurrentProcessMemoryStatus.cpp",
       "linux/CurrentProcessMemoryStatus.h",
@@ -744,14 +745,28 @@ component("wtf") {
       "linux/ProcessMemoryFootprint.h",
       "linux/RealTimeThreads.cpp",
       "linux/RealTimeThreads.h",
-      "unix/LanguageUnix.cpp",
-      "unix/LoggingUnix.cpp",
-      "unix/MemoryPressureHandlerUnix.cpp",
-      "unix/UniStdExtrasUnix.cpp",
       "unix/UnixFileDescriptor.h",
     ]
 
-    configs += [ "//build/config/linux:glib" ]
+    if (use_gtk) {
+      sources += [ "unix/MemoryPressureHandlerUnix.cpp" ]
+    } else {
+      sources += [ "generic/MemoryPressureHandlerGeneric.cpp" ]
+    }
+
+    if (use_glib) {
+      # sources -= ["URL.cpp"]
+      sources += [
+        "PlatformEnableGlib.h",
+        "glib/URLGLib.cpp",
+      ]
+
+      configs += [ "//build/config/linux:glib" ]
+    }
+  }
+
+  if (use_gtk) {
+    sources += []
   }
 
   if (is_win) {
@@ -787,4 +802,16 @@ component("wtf") {
       "winmm",
     ]
   }
+
+  deps = [ "//build:cmake_buildflags" ]
+
+  if (!use_system_malloc) {
+    deps += [ "//Source/bmalloc" ]
+  }
+  deps += [ "//third_party/icu" ]
+
+  cflags = [
+    "-I",
+    rebase_path("//Source/WTF/config.h", root_build_dir),
+  ]
 }

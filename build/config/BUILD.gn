@@ -7,6 +7,7 @@ import("//build/config/cast.gni")
 import("//build/config/chrome_build.gni")
 import("//build/config/dcheck_always_on.gni")
 import("//build/config/features.gni")
+import("//build/config/common.gni")
 
 # Subprojects need to override arguments in {mac,ios}_sdk_overrides.gni in their
 # .gn config, but those arguments are only used on macOS. Including
@@ -102,6 +103,23 @@ config("feature_flags") {
   #
   # See the comment at the top.
 }
+
+config("common") {
+  defines = [
+    "BUILDING_WEBKIT=1",
+    "HAVE_CONFIG_H=1",
+    "PAS_BMALLOC=1",
+    "_GNU_SOURCE=1",
+    "BUILDING_WITH_CMAKE=1"
+  ]
+
+  if (enable_asserts) {
+    defines += [
+      "ASSERT_ENABLED=1"
+    ]
+  }
+}
+
 
 # Debug/release ----------------------------------------------------------------
 

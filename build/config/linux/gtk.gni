@@ -1,0 +1,25 @@
+import("//build/config/linux/linux.gni")
+import("//build/config/linux/gtk/gtk.gni")
+
+declare_args() {
+  # Whether to enable support for the Quartz windowing target.
+  enable_quartz_target = true
+
+  # Whether to enable support for the Wayland windowing target.
+  enable_wayland_target = true
+
+  # Whether to enable support for the X11 windowing target.
+  enable_x11_target = true
+
+  # Whether to enable the default automatic hyphenation implementation.
+  use_libhyphen = true
+
+  # Whether to enable the persistent credential storage using libsecret.
+  use_libsecret = true
+
+  use_theme_adwaita = true
+  use_xdgmime = true
+}
+
+assert(!use_gbm || use_libdrm)
+assert(gtk_version != 4 || use_soup2)

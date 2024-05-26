@@ -1,0 +1,37 @@
+declare_args() {
+  is_wpe = false
+
+  # Whether to generate documentation
+  enable_documentation = true
+
+  # Whether to enable GObject introspection
+  enable_introspection = true
+
+  # Whether to enable journald logging
+  enable_journald_log = true
+
+  # Whether to enable usage of Soup 2 instead of Soup 3.
+  use_soup2 = false
+
+  # Whether to enable usage of libbacktrace.
+  use_libbacktrace = true
+
+  # Whether to enable usage of libdrm.
+  use_libdrm = true
+
+  # Whether to enable usage of GBM.
+  use_gbm = true
+
+  use_gcrypt = true
+  use_libepoxy = true
+  use_capstone =
+      is_debug && (target_cpu == "arm" || target_cpu == "arm64" ||
+                   target_cpu == "mipsel" || target_cpu == "mips64el")
+
+  # Support 64 KB userspace page size (reduces security and performance)
+  use_64kb_page_block = false
+}
+
+if (enable_documentation) {
+  assert(enable_introspection)
+}

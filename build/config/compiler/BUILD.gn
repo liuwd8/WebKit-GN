@@ -1585,7 +1585,6 @@ config("clang_revision") {
     # clang_revision = exec_script("//tools/clang/scripts/update.py",
     #                              update_args,
     #                              "trim string")
-
     # # This is here so that all files get recompiled after a clang roll and
     # # when turning clang on or off. (defines are passed via the command line,
     # # and build system rebuild things when their commandline changes). Nothing

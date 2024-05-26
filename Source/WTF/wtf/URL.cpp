@@ -21,7 +21,7 @@
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
  * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "config.h"
@@ -261,20 +261,20 @@ String URL::consumeFragmentDirective()
 {
     ASCIILiteral fragmentDirectiveDelimiter = ":~:"_s;
     auto fragment = fragmentIdentifier();
-    
+
     auto fragmentDirectiveStart = fragment.find(fragmentDirectiveDelimiter);
-    
+
     if (fragmentDirectiveStart == notFound)
         return { };
-    
+
     auto fragmentDirective = fragment.substring(fragmentDirectiveStart + fragmentDirectiveDelimiter.length()).toString();
-    
+
     auto remainingFragment = fragment.left(fragmentDirectiveStart);
     if (remainingFragment.isEmpty())
         removeFragmentIdentifier();
     else
         setFragmentIdentifier(remainingFragment);
-    
+
     return fragmentDirective;
 }
 
@@ -382,7 +382,7 @@ bool URL::protocolIs(StringView protocol) const
 
     if (!m_isValid)
         return false;
-    
+
     if (m_schemeEnd != protocol.length())
         return false;
 
@@ -1283,23 +1283,23 @@ Vector<KeyValuePair<String, String>> differingQueryParameters(const URL& firstUR
 {
     auto firstQueryParameters = URLParser::parseURLEncodedForm(firstURL.query());
     auto secondQueryParameters = URLParser::parseURLEncodedForm(secondURL.query());
-    
+
     if (firstQueryParameters.isEmpty())
         return secondQueryParameters;
 
     if (secondQueryParameters.isEmpty())
         return firstQueryParameters;
-    
+
     auto compare = [] (const KeyValuePair<String, String>& a, const KeyValuePair<String, String>& b) {
         if (int result = codePointCompare(a.key, b.key))
             return result;
         return codePointCompare(a.value, b.value);
-        
+
     };
     auto comparesLessThan = [compare] (const KeyValuePair<String, String>& a, const KeyValuePair<String, String>& b) {
         return compare(a, b) < 0;
     };
-    
+
     std::sort(firstQueryParameters.begin(), firstQueryParameters.end(), comparesLessThan);
     std::sort(secondQueryParameters.begin(), secondQueryParameters.end(), comparesLessThan);
     size_t totalFirstQueryParameters = firstQueryParameters.size();
@@ -1320,17 +1320,17 @@ Vector<KeyValuePair<String, String>> differingQueryParameters(const URL& firstUR
             indexInSecondQueryParameters++;
         }
     }
-    
+
     while (indexInFirstQueryParameters < totalFirstQueryParameters) {
         differingQueryParameters.append(firstQueryParameters[indexInFirstQueryParameters]);
         indexInFirstQueryParameters++;
     }
-    
+
     while (indexInSecondQueryParameters < totalSecondQueryParameters) {
         differingQueryParameters.append(secondQueryParameters[indexInSecondQueryParameters]);
         indexInSecondQueryParameters++;
     }
-    
+
     return differingQueryParameters;
 }
 
@@ -1338,7 +1338,7 @@ static StringView substringIgnoringQueryAndFragments(const URL& url)
 {
     if (!url.isValid())
         return StringView(url.string());
-    
+
     return StringView(url.string()).left(url.pathEnd());
 }
 
@@ -1357,7 +1357,7 @@ Vector<String> removeQueryParameters(URL& url, const HashSet<String>& keysToRemo
     });
 }
 
-Vector<String> removeQueryParameters(URL& url, Function<bool(const String&)>&& shouldRemove) 
+Vector<String> removeQueryParameters(URL& url, Function<bool(const String&)>&& shouldRemove)
 {
     if (!url.hasQuery())
         return { };

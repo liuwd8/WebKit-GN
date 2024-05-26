@@ -1,0 +1,4 @@
+declare_args() {
+  # Enable or disable assertions regardless of build type
+  enable_asserts = is_debug
+}
