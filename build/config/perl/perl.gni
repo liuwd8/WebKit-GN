@@ -1,0 +1,18 @@
+declare_args() {
+  perl_path = rebase_path("/usr/bin/perl", root_build_dir)
+}
+
+template("perl") {
+  action(target_name) {
+    forward_variables_from(invoker, "*")
+
+    script = "//build/gn_run_binary.py"
+
+    args = []
+
+    args += [
+              perl_path,
+              rebase_path(invoker.script),
+            ] + invoker.args
+  }
+}

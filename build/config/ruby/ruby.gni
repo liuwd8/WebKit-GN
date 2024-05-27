@@ -1,0 +1,18 @@
+declare_args() {
+  ruby_path = rebase_path("/usr/bin/ruby", root_build_dir)
+}
+
+template("ruby") {
+  action(target_name) {
+    forward_variables_from(invoker, "*")
+
+    script = "//build/gn_run_binary.py"
+
+    args = []
+
+    args += [
+              ruby_path,
+              rebase_path(invoker.script),
+            ] + invoker.args
+  }
+}

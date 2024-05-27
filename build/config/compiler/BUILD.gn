@@ -308,7 +308,6 @@ config("compiler") {
     ":rustc_revision",
     ":compiler_cpu_abi",
     ":compiler_codegen",
-    ":compiler_deterministic",
   ]
 
   # Here we enable -fno-delete-null-pointer-checks, which makes various nullptr

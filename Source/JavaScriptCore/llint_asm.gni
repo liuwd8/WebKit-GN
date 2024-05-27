@@ -1,0 +1,9 @@
+llint_asm = [
+  "llint/InPlaceInterpreter.asm",
+  "llint/LowLevelInterpreter.asm",
+  "llint/LowLevelInterpreter32_64.asm",
+  "llint/LowLevelInterpreter64.asm",
+  "llint/WebAssembly.asm",
+  "llint/WebAssembly32_64.asm",
+  "llint/WebAssembly64.asm",
+]

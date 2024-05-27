@@ -9,7 +9,10 @@ config("wtf_public_config") {
     "-Wno-header-hygiene",
   ]
 
-  include_dirs = [ "//Source/bmalloc" ]
+  include_dirs = [
+    "//Source/WTF",
+    "$root_gen_dir/build",
+  ]
 }
 
 config("wtf_config") {
@@ -23,7 +26,6 @@ config("wtf_config") {
     "//Source/WTF/wtf/text/icu",
     "//Source/WTF/wtf/threads",
     "//Source/WTF/wtf/unicode",
-    "$root_gen_dir/build",
   ]
 }
 
@@ -761,7 +763,7 @@ component("wtf") {
         "glib/URLGLib.cpp",
       ]
 
-      configs += [ "//build/config/linux:glib" ]
+      public_configs += [ "//build/config/linux:glib" ]
     }
   }
 
@@ -805,13 +807,16 @@ component("wtf") {
 
   deps = [ "//build:cmake_buildflags" ]
 
+  public_deps = [ "//third_party/icu" ]
+
   if (!use_system_malloc) {
-    deps += [ "//Source/bmalloc" ]
+    public_deps += [ "//Source/bmalloc" ]
   }
-  deps += [ "//third_party/icu" ]
 
   cflags = [
     "-I",
     rebase_path("//Source/WTF/config.h", root_build_dir),
   ]
+
+  defines = [ "BUILDING_WTF" ]
 }

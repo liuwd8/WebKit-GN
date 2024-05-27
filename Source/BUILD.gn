@@ -1,3 +1,6 @@
 group("Source") {
-  deps = [ "WTF" ]
+  deps = [
+    "JavaScriptCore:jsc",
+    "WTF",
+  ]
 }
