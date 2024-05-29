@@ -17,7 +17,6 @@ declare_args() {
   # Whether to enable the persistent credential storage using libsecret.
   use_libsecret = true
 
-  use_theme_adwaita = true
   use_xdgmime = true
 }
 

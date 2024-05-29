@@ -1,5 +1,5 @@
 declare_args() {
-  perl_path = rebase_path("/usr/bin/perl", root_build_dir)
+  perl_path = "/usr/bin/perl"
 }
 
 template("perl") {

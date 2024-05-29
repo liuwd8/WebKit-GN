@@ -1,0 +1,945 @@
+import("//Source/JavaScriptCore/jsc.gni")
+import("//Source/WebCore/headers.gni")
+import("//Source/WebCore/idl.gni")
+import("//Source/WebCore/sources.gni")
+import("//Source/WebCore/web_core.gni")
+import("//build/config/clang/clang.gni")
+import("//build/config/linux/gtk/gtk.gni")
+import("//build/config/perl/perl.gni")
+import("//build/config/ruby/ruby.gni")
+import("//build/config/webkit_features.gni")
+
+# The executables are relative to the build directory. Don't rebase it because
+# on Posix we want to run the system one on the path.
+if (host_os == "win") {
+  gperf_exe = rebase_path("//third_party/gperf/bin/gperf.exe", root_build_dir)
+} else if (is_ios) {
+  gperf_exe = ios_bin_path + "gperf"
+} else if (host_os == "mac") {
+  # TODO(thakis): This should probably run in the host toolchain and check
+  # is_mac instead of checking host_os.
+  gperf_exe = mac_bin_path + "gperf"
+} else {
+  gperf_exe = "gperf"
+}
+
+__preprocessor = "$clang_base_path/bin/clang++ -E -P -x c++"
+
+action("modern_media_controls_css_generator") {
+  script = "//build/noop.py"
+
+  inputs = [
+    "Modules/modern-media-controls/controls/activity-indicator.css",
+    "Modules/modern-media-controls/controls/airplay-button.css",
+    "Modules/modern-media-controls/controls/background-tint.css",
+    "Modules/modern-media-controls/controls/button.css",
+    "Modules/modern-media-controls/controls/buttons-container.css",
+    "Modules/modern-media-controls/controls/controls-bar.css",
+    "Modules/modern-media-controls/controls/inline-media-controls.css",
+    "Modules/modern-media-controls/controls/ios-inline-media-controls.css",
+    "Modules/modern-media-controls/controls/macos-fullscreen-media-controls.css",
+    "Modules/modern-media-controls/controls/macos-inline-media-controls.css",
+    "Modules/modern-media-controls/controls/adwaita-inline-media-controls.css",
+    "Modules/modern-media-controls/controls/adwaita-fullscreen-media-controls.css",
+    "Modules/modern-media-controls/controls/media-controls.css",
+    "Modules/modern-media-controls/controls/media-document.css",
+    "Modules/modern-media-controls/controls/placard.css",
+    "Modules/modern-media-controls/controls/slider-base.css",
+    "Modules/modern-media-controls/controls/slider.css",
+    "Modules/modern-media-controls/controls/status-label.css",
+    "Modules/modern-media-controls/controls/text-tracks.css",
+    "Modules/modern-media-controls/controls/time-label.css",
+    "Modules/modern-media-controls/controls/watchos-activity-indicator.css",
+    "Modules/modern-media-controls/controls/watchos-media-controls.css",
+  ]
+
+  if (use_theme_adwaita) {
+    inputs += [ "Modules/modern-media-controls/controls/adwaita-overrides.css" ]
+  }
+
+  output_file = "$target_gen_dir/ModernMediaControls.css"
+  outputs = [ output_file ]
+
+  content = ""
+  foreach(file, inputs) {
+    content += read_file(file, "string")
+  }
+
+  write_file(output_file, content, "string")
+}
+
+ruby("domjit_abstract_heap_repository_generator") {
+  script = "domjit/generate-abstract-heap.rb"
+
+  inputs = [ "domjit/DOMJITAbstractHeapRepository.yaml" ]
+
+  output_file = "$target_gen_dir/DOMJITAbstractHeapRepository.h"
+  outputs = [ output_file ]
+
+  args = [
+    rebase_path("domjit/DOMJITAbstractHeapRepository.yaml", root_build_dir),
+    rebase_path(output_file, root_build_dir),
+  ]
+}
+
+perl("xml_viewer_min_css_generator") {
+  script = "//Source/JavaScriptCore/Scripts/xxd.pl"
+
+  inputs = [ "xml/XMLViewer.css" ]
+
+  outputs = [ "$target_gen_dir/XMLViewerCSS.h" ]
+
+  args = [
+    "XMLViewer_css",
+    rebase_path("xml/XMLViewer.css", root_build_dir),
+    rebase_path("$target_gen_dir/XMLViewerCSS.h", root_build_dir),
+  ]
+}
+
+perl("xml_viewer_min_js_generator") {
+  script = "//Source/JavaScriptCore/Scripts/xxd.pl"
+
+  inputs = [ "xml/XMLViewer.js" ]
+
+  outputs = [ "$target_gen_dir/XMLViewerJS.h" ]
+
+  args = [
+    "XMLViewer_js",
+    rebase_path("xml/XMLViewer.js", root_build_dir),
+    rebase_path("$target_gen_dir/XMLViewerJS.h", root_build_dir),
+  ]
+}
+
+action("html_entity_table") {
+  script = "html/parser/create-html-entity-table"
+
+  inputs = [ "html/parser/HTMLEntityNames.in" ]
+
+  outputs = [ "$target_gen_dir/HTMLEntityTable.cpp" ]
+
+  args = [
+    "-o",
+    rebase_path("$target_gen_dir/HTMLEntityTable.cpp", root_build_dir),
+    rebase_path("html/parser/HTMLEntityNames.in", root_build_dir),
+  ]
+}
+
+action("http_header_names") {
+  script = "//build/chdir.py"
+
+  inputs = [
+    "platform/network/create-http-header-name-table",
+    "platform/network/HTTPHeaderNames.in",
+  ]
+
+  outputs = [
+    "$target_gen_dir/HTTPHeaderNames.cpp",
+    "$target_gen_dir/HTTPHeaderNames.gperf",
+    "$target_gen_dir/HTTPHeaderNames.h",
+    "$target_gen_dir/HTTPHeaderNames.serialization.in",
+  ]
+
+  args = [
+    rebase_path("$target_gen_dir", root_build_dir),
+    rebase_path("platform/network/create-http-header-name-table",
+                target_gen_dir),
+    rebase_path("platform/network/HTTPHeaderNames.in", target_gen_dir),
+    gperf_exe,
+  ]
+}
+
+action("css_properties") {
+  script = "//build/chdir.py"
+
+  inputs = [
+    "css/process-css-properties.py",
+    "css/CSSProperties.json",
+  ]
+
+  outputs = [
+    "$target_gen_dir/CSSPropertyNames.cpp",
+    "$target_gen_dir/CSSPropertyNames.gperf",
+    "$target_gen_dir/CSSPropertyNames.h",
+    "$target_gen_dir/CSSPropertyParsing.cpp",
+    "$target_gen_dir/CSSPropertyParsing.gperf",
+    "$target_gen_dir/CSSPropertyParsing.h",
+    "$target_gen_dir/StyleBuilderGenerated.cpp",
+    "$target_gen_dir/StylePropertyShorthandFunctions.h",
+    "$target_gen_dir/StylePropertyShorthandFunctions.cpp",
+    "$target_gen_dir/CSSStyleDeclaration+PropertyNames.idl",
+  ]
+
+  args = [
+    rebase_path("$target_gen_dir", root_build_dir),
+    rebase_path("css/process-css-properties.py", target_gen_dir),
+    "--properties",
+    rebase_path("css/CSSProperties.json", target_gen_dir),
+    "--gperf-executable",
+    gperf_exe,
+  ]
+}
+
+action("css_value_keywords") {
+  script = "//build/chdir.py"
+
+  input_files = [
+    "css/CSSValueKeywords.in",
+    "css/SVGCSSValueKeywords.in",
+  ]
+
+  inputs = [ "css/process-css-values.py" ] + input_files
+
+  outputs = [
+    "$target_gen_dir/CSSValueKeywords.cpp",
+    "$target_gen_dir/CSSValueKeywords.gperf",
+    "$target_gen_dir/CSSValueKeywords.h",
+  ]
+
+  css_value_platform_defines = []
+  if (use_gtk) {
+    css_value_platform_defines += [ "HAVE_OS_DARK_MODE_SUPPORT=1" ]
+  } else if (is_mac) {
+    css_value_platform_defines += [
+      "WTF_PLATFORM_MAC=1",
+      "HAVE_OS_DARK_MODE_SUPPORT=1",
+      "WTF_PLATFORM_COCOA=1",
+      "ENABLE_APPLE_PAY_NEW_BUTTON_TYPES=1",
+    ]
+  }
+
+  content = ""
+  foreach(file, input_files) {
+    content += read_file(file, "string")
+  }
+
+  write_file("$target_gen_dir/CSSValueKeywords.in", content, "string")
+  args = [
+    rebase_path("$target_gen_dir", root_build_dir),
+    rebase_path("css/process-css-values.py", target_gen_dir),
+    "--defines",
+    string_join(" ", css_value_platform_defines),
+    "--gperf-executable",
+    gperf_exe,
+  ]
+}
+
+action("css_selector_enums") {
+  script = "//build/chdir.py"
+
+  inputs = [
+    "css/process-css-pseudo-selectors.py",
+    "css/CSSPseudoSelectors.json",
+  ]
+
+  outputs = [
+    "$target_gen_dir/CSSSelectorEnums.h",
+    "$target_gen_dir/CSSSelectorInlines.h",
+    "$target_gen_dir/SelectorPseudoClassAndCompatibilityElementMap.gperf",
+    "$target_gen_dir/SelectorPseudoClassAndCompatibilityElementMap.cpp",
+    "$target_gen_dir/SelectorPseudoElementMap.gperf",
+    "$target_gen_dir/SelectorPseudoElementMap.cpp",
+    "$target_gen_dir/UserAgentParts.cpp",
+    "$target_gen_dir/UserAgentParts.h",
+  ]
+
+  args = [
+    rebase_path("$target_gen_dir", root_build_dir),
+    rebase_path("css/process-css-pseudo-selectors.py", target_gen_dir),
+    "--selectors",
+    rebase_path("css/CSSPseudoSelectors.json", target_gen_dir),
+    "--gperf-executable",
+    gperf_exe,
+  ]
+}
+
+perl("user_agent_styles") {
+  script = "css/make-css-file-arrays.pl"
+
+  input_files = [
+    "css/counterStyles.css",
+    "css/fullscreen.css",
+    "css/horizontalFormControls.css",
+    "css/html.css",
+    "css/htmlSwitchControl.css",
+    "css/mathml.css",
+    "css/plugIns.css",
+    "css/popover.css",
+    "css/quirks.css",
+    "css/svg.css",
+    "css/viewTransitions.css",
+    "html/shadow/attachmentElementShadow.css",
+    "html/shadow/imageOverlay.css",
+    "html/shadow/meterElementShadow.css",
+  ]
+
+  inputs = input_files + [ "bindings/scripts/preprocessor.pm" ]
+
+  outputs = [
+    "$target_gen_dir/UserAgentStyleSheetsData.cpp",
+    "$target_gen_dir/UserAgentStyleSheets.h",
+  ]
+
+  args = [
+    "--defines",
+    "A=1",
+    "--preprocessor",
+    rebase_path(__preprocessor, root_build_dir),
+  ]
+
+  args += rebase_path(outputs, root_build_dir)
+  args += rebase_path(input_files, root_build_dir)
+}
+
+perl("plug_ins_resources_data") {
+  script = "css/make-css-file-arrays.pl"
+
+  inputs = [
+    "Resources/plugIns.js",
+
+    "bindings/scripts/preprocessor.pm",
+  ]
+
+  outputs = [
+    "$target_gen_dir/PlugInsResourcesData.cpp",
+    "$target_gen_dir/PlugInsResources.h",
+  ]
+
+  args = [
+    "--defines",
+    "A=1",
+    "--preprocessor",
+    rebase_path(__preprocessor, root_build_dir),
+  ]
+
+  args += rebase_path(outputs, root_build_dir)
+  args += [ rebase_path("Resources/plugIns.js", root_build_dir) ]
+}
+
+ruby("settings_h") {
+  script = "Scripts/GenerateSettings.rb"
+
+  settings_templates = [
+    "Scripts/SettingsTemplates/InternalSettingsGenerated.cpp.erb",
+    "Scripts/SettingsTemplates/InternalSettingsGenerated.idl.erb",
+    "Scripts/SettingsTemplates/InternalSettingsGenerated.h.erb",
+    "Scripts/SettingsTemplates/Settings.cpp.erb",
+    "Scripts/SettingsTemplates/Settings.h.erb",
+  ]
+
+  inputs = settings_templates
+  inputs += [ "page/Settings.yaml" ]
+
+  outputs = [
+    "$target_gen_dir/Settings.h",
+    "$target_gen_dir/Settings.cpp",
+    "$target_gen_dir/InternalSettingsGenerated.cpp",
+    "$target_gen_dir/InternalSettingsGenerated.h",
+    "$target_gen_dir/InternalSettingsGenerated.idl",
+  ]
+
+  templates = string_join(" --template ",
+                          rebase_path(settings_templates, root_build_dir))
+  command_template = string_split(templates, " ")
+
+  args = [
+    "--outputDir",
+    rebase_path(target_gen_dir, root_build_dir),
+    "--template",
+  ]
+  args += command_template
+  args += [
+    rebase_path("//Source/WTF/Scripts/Preferences/UnifiedWebPreferences.yaml",
+                root_build_dir),
+    rebase_path("page/Settings.yaml", root_build_dir),
+  ]
+}
+
+generate_bindings("web_core_bindings") {
+  sources = web_core_idl_files
+  sources += [ "$target_gen_dir/CSSStyleDeclaration+PropertyNames.idl" ]
+
+  inputs = sources
+
+  output_dir = target_gen_dir
+
+  outputs = []
+
+  foreach(i, sources) {
+    __name = get_path_info(i, "name")
+    outputs += [
+      "$output_dir/JS" + __name + ".cpp",
+      "$output_dir/JS" + __name + ".h",
+    ]
+  }
+
+  deps = [ ":css_properties" ]
+
+  pp_idl_files = web_core_idl_files
+  features = [ "LANGUAGE_JAVASCRIPT" ]
+  generator = "JS"
+  supplemental_depfile = "$target_gen_dir/supplemental_dependency.tmp"
+  preprocessor = __preprocessor
+  pp_extra_output = [
+    "$target_gen_dir/DOMIsoSubspaces.h",
+    "$target_gen_dir/DOMClientIsoSubspaces.h",
+    "$target_gen_dir/DOMConstructors.h",
+    "$target_gen_dir/DOMWindowConstructors.idl",
+    "$target_gen_dir/WorkerGlobalScopeConstructors.idl",
+    "$target_gen_dir/ShadowRealmGlobalScopeConstructors.idl",
+    "$target_gen_dir/DedicatedWorkerGlobalScopeConstructors.idl",
+  ]
+
+  pp_extra_args = [
+    "--isoSubspacesHeaderFile",
+    rebase_path("$target_gen_dir/DOMIsoSubspaces.h", root_build_dir),
+    "--clientISOSubspacesHeaderFile",
+    rebase_path("$target_gen_dir/DOMClientIsoSubspaces.h", root_build_dir),
+    "--constructorsHeaderFile",
+    rebase_path("$target_gen_dir/DOMConstructors.h", root_build_dir),
+    "--windowConstructorsFile",
+    rebase_path("$target_gen_dir/DOMWindowConstructors.idl", root_build_dir),
+    "--workerGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/WorkerGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--shadowRealmGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/ShadowRealmGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--dedicatedWorkerGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/DedicatedWorkerGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--serviceWorkerGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/ServiceWorkerGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--sharedWorkerGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/SharedWorkerGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--workletGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/WorkletGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--paintWorkletGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/PaintWorkletGlobalScopeConstructors.idl",
+                root_build_dir),
+    "--audioWorkletGlobalScopeConstructorsFile",
+    rebase_path("$target_gen_dir/AudioWorkletGlobalScopeConstructors.idl",
+                root_build_dir),
+  ]
+}
+
+action_foreach("builtins_sources") {
+  script = "//Source/JavaScriptCore/Scripts/generate-js-builtins.py"
+
+  sources = builtins_sources
+
+  inputs = jsc_builtin_scripts
+
+  mnemonic = "WebCoreBuitins"
+
+  outputs = [
+    "$target_gen_dir/{{source_name_part}}Builtins.h",
+    "$target_gen_dir/{{source_name_part}}Builtins.cc",
+  ]
+
+  args = [
+    "--framework",
+    "WebCore",
+    "--output-directory",
+    rebase_path(target_gen_dir, root_build_dir),
+    "{{source}}",
+  ]
+}
+
+action("web_core_js_builtins") {
+  script = "//Source/JavaScriptCore/Scripts/generate-js-builtins.py"
+
+  inputs = builtins_sources + jsc_builtin_scripts
+
+  outputs = [
+    "$target_gen_dir/WebCoreJSBuiltins.cpp",
+    "$target_gen_dir/WebCoreJSBuiltins.h",
+    "$target_gen_dir/WebCoreJSBuiltinInternals.h",
+    "$target_gen_dir/WebCoreJSBuiltinInternals.cpp",
+  ]
+
+  deps = [ ":builtins_sources" ]
+
+  args = [
+    "--wrappers-only",
+    "--framework",
+    "WebCore",
+    "--output-directory",
+    rebase_path(target_gen_dir, root_build_dir),
+  ]
+
+  args += rebase_path(builtins_sources, root_build_dir)
+}
+
+generate_dom_names("html") {
+  namespace = "HTML"
+  attrs_file = "html/HTMLAttributeNames.in"
+  elements_file = "html/HTMLTagNames.in"
+}
+
+generate_dom_names("math_ml") {
+  namespace = "MathML"
+  attrs_file = "mathml/mathattrs.in"
+  elements_file = "mathml/mathtags.in"
+}
+
+generate_dom_names("svg") {
+  namespace = "SVG"
+  attrs_file = "svg/svgattrs.in"
+  elements_file = "svg/svgtags.in"
+}
+
+generate_dom_names("x_link") {
+  namespace = "XLink"
+  attrs_file = "svg/xlinkattrs.in"
+}
+
+generate_dom_names("xmlns") {
+  namespace = "XMLNS"
+  attrs_file = "xml/xmlnsattrs.in"
+}
+
+generate_dom_names("xml") {
+  namespace = "XML"
+  attrs_file = "xml/xmlattrs.in"
+}
+
+generate_event_factory("event") {
+  namespace = "Event"
+  infile = "dom/EventInterfaces.in"
+}
+
+generate_event_factory("event_target") {
+  namespace = "EventTarget"
+  infile = "dom/EventTargetFactory.in"
+}
+
+action("event_names") {
+  script = "//build/chdir.py"
+
+  inputs = scripts_bindings
+
+  infile = "dom/EventNames.json"
+
+  inputs += [
+    infile,
+    "dom/make-event-names.py",
+  ]
+
+  outputs = [
+    "$target_gen_dir/EventNames.h",
+    "$target_gen_dir/EventNames.cpp",
+  ]
+
+  args = [
+    rebase_path(target_gen_dir, root_build_dir),
+    rebase_path("dom/make-event-names.py", target_gen_dir),
+
+    "--event-names",
+    rebase_path(infile, target_gen_dir),
+  ]
+}
+
+perl("font_names") {
+  script = "dom/make_names.pl"
+
+  inputs = scripts_bindings
+
+  infile = "css/WebKitFontFamilyNames.in"
+
+  inputs += [ infile ]
+
+  outputs = [
+    "$target_gen_dir/WebKitFontFamilyNames.h",
+    "$target_gen_dir/WebKitFontFamilyNames.cpp",
+  ]
+
+  args = [
+    "--outputDir",
+    rebase_path(target_gen_dir, root_build_dir),
+    "--fonts",
+    rebase_path(infile, root_build_dir),
+  ]
+}
+
+generate_dom_name_enum("tag_name") {
+  enum = "TagName"
+}
+
+generate_dom_name_enum("node_name") {
+  enum = "NodeName"
+}
+
+generate_dom_name_enum("namespace") {
+  enum = "Namespace"
+}
+
+component("webcore") {
+  sources = web_core_private_framework_headers
+
+  include_dirs = [
+    "platform/graphics/angle",
+    target_gen_dir,
+    "//Source/WebCore",
+    "//Source/WebCore/PAL",
+    "//Source/WebCore/Modules/ShapeDetection",
+    "//Source/WebCore/Modules/ShapeDetection/Interfaces",
+    "//Source/WebCore/Modules/WebGPU",
+    "//Source/WebCore/Modules/WebGPU/InternalAPI",
+    "//Source/WebCore/Modules/WebGPU/Implementation",
+    "//Source/WebCore/Modules/airplay",
+    "//Source/WebCore/Modules/applepay",
+    "//Source/WebCore/Modules/applepay/paymentrequest",
+    "//Source/WebCore/Modules/applicationmanifest",
+    "//Source/WebCore/Modules/async-clipboard",
+    "//Source/WebCore/Modules/audiosession",
+    "//Source/WebCore/Modules/badge",
+    "//Source/WebCore/Modules/beacon",
+    "//Source/WebCore/Modules/cache",
+    "//Source/WebCore/Modules/compression",
+    "//Source/WebCore/Modules/contact-picker",
+    "//Source/WebCore/Modules/cookie-consent",
+    "//Source/WebCore/Modules/cookie-store",
+    "//Source/WebCore/Modules/credentialmanagement",
+    "//Source/WebCore/Modules/encryptedmedia",
+    "//Source/WebCore/Modules/encryptedmedia/legacy",
+    "//Source/WebCore/Modules/entriesapi",
+    "//Source/WebCore/Modules/fetch",
+    "//Source/WebCore/Modules/filesystemaccess",
+    "//Source/WebCore/Modules/geolocation",
+    "//Source/WebCore/Modules/highlight",
+    "//Source/WebCore/Modules/identity",
+    "//Source/WebCore/Modules/indexeddb",
+    "//Source/WebCore/Modules/indexeddb/client",
+    "//Source/WebCore/Modules/indexeddb/server",
+    "//Source/WebCore/Modules/indexeddb/shared",
+    "//Source/WebCore/Modules/mediacapabilities",
+    "//Source/WebCore/Modules/mediacontrols",
+    "//Source/WebCore/Modules/mediarecorder",
+    "//Source/WebCore/Modules/mediasession",
+    "//Source/WebCore/Modules/mediasource",
+    "//Source/WebCore/Modules/mediastream",
+    "//Source/WebCore/Modules/model-element",
+    "//Source/WebCore/Modules/model-element/dummy",
+    "//Source/WebCore/Modules/navigatorcontentutils",
+    "//Source/WebCore/Modules/notifications",
+    "//Source/WebCore/Modules/paymentrequest",
+    "//Source/WebCore/Modules/permissions",
+    "//Source/WebCore/Modules/pictureinpicture",
+    "//Source/WebCore/Modules/plugins",
+    "//Source/WebCore/Modules/push-api",
+    "//Source/WebCore/Modules/remoteplayback",
+    "//Source/WebCore/Modules/reporting",
+    "//Source/WebCore/Modules/screen-wake-lock",
+    "//Source/WebCore/Modules/speech",
+    "//Source/WebCore/Modules/storage",
+    "//Source/WebCore/Modules/streams",
+    "//Source/WebCore/Modules/web-locks",
+    "//Source/WebCore/Modules/webaudio",
+    "//Source/WebCore/Modules/webauthn",
+    "//Source/WebCore/Modules/webauthn/cbor",
+    "//Source/WebCore/Modules/webauthn/fido",
+    "//Source/WebCore/Modules/webcodecs",
+    "//Source/WebCore/Modules/webdatabase",
+    "//Source/WebCore/Modules/webdriver",
+    "//Source/WebCore/Modules/websockets",
+    "//Source/WebCore/Modules/webtransport",
+    "//Source/WebCore/Modules/webxr",
+    "//Source/WebCore/accessibility",
+    "//Source/WebCore/accessibility/isolatedtree",
+    "//Source/WebCore/animation",
+    "//Source/WebCore/bindings",
+    "//Source/WebCore/bindings/js",
+    "//Source/WebCore/bridge",
+    "//Source/WebCore/bridge/c",
+    "//Source/WebCore/bridge/jsc",
+    "//Source/WebCore/contentextensions",
+    "//Source/WebCore/crypto",
+    "//Source/WebCore/crypto/algorithms",
+    "//Source/WebCore/crypto/keys",
+    "//Source/WebCore/crypto/parameters",
+    "//Source/WebCore/css",
+    "//Source/WebCore/css/calc",
+    "//Source/WebCore/css/color",
+    "//Source/WebCore/css/parser",
+    "//Source/WebCore/css/query",
+    "//Source/WebCore/css/typedom",
+    "//Source/WebCore/css/typedom/color",
+    "//Source/WebCore/css/typedom/numeric",
+    "//Source/WebCore/css/typedom/transform",
+    "//Source/WebCore/cssjit",
+    "//Source/WebCore/dom",
+    "//Source/WebCore/dom/messageports",
+    "//Source/WebCore/domjit",
+    "//Source/WebCore/editing",
+    "//Source/WebCore/fileapi",
+    "//Source/WebCore/history",
+    "//Source/WebCore/html",
+    "//Source/WebCore/html/canvas",
+    "//Source/WebCore/html/forms",
+    "//Source/WebCore/html/parser",
+    "//Source/WebCore/html/shadow",
+    "//Source/WebCore/html/track",
+    "//Source/WebCore/inspector",
+    "//Source/WebCore/inspector/agents",
+    "//Source/WebCore/inspector/agents/page",
+    "//Source/WebCore/inspector/agents/worker",
+    "//Source/WebCore/layout",
+    "//Source/WebCore/layout/formattingContexts",
+    "//Source/WebCore/layout/formattingContexts/block",
+    "//Source/WebCore/layout/formattingContexts/block/tablewrapper",
+    "//Source/WebCore/layout/formattingContexts/flex",
+    "//Source/WebCore/layout/floats",
+    "//Source/WebCore/layout/formattingContexts/inline",
+    "//Source/WebCore/layout/formattingContexts/inline/display",
+    "//Source/WebCore/layout/formattingContexts/inline/invalidation",
+    "//Source/WebCore/layout/formattingContexts/inline/ruby",
+    "//Source/WebCore/layout/formattingContexts/inline/text",
+    "//Source/WebCore/layout/integration",
+    "//Source/WebCore/layout/integration/flex",
+    "//Source/WebCore/layout/integration/inline",
+    "//Source/WebCore/layout/layouttree",
+    "//Source/WebCore/layout/formattingContexts/table",
+    "//Source/WebCore/loader",
+    "//Source/WebCore/loader/appcache",
+    "//Source/WebCore/loader/archive",
+    "//Source/WebCore/loader/archive/mhtml",
+    "//Source/WebCore/loader/cache",
+    "//Source/WebCore/loader/icon",
+    "//Source/WebCore/mathml",
+    "//Source/WebCore/page",
+    "//Source/WebCore/page/csp",
+    "//Source/WebCore/page/scrolling",
+    "//Source/WebCore/page/text-extraction",
+    "//Source/WebCore/platform",
+    "//Source/WebCore/platform/animation",
+    "//Source/WebCore/platform/audio",
+    "//Source/WebCore/platform/calc",
+    "//Source/WebCore/platform/encryptedmedia",
+    "//Source/WebCore/platform/gamepad",
+    "//Source/WebCore/platform/graphics",
+    "//Source/WebCore/platform/graphics/cpu/arm",
+    "//Source/WebCore/platform/graphics/cpu/arm/filters",
+    "//Source/WebCore/platform/graphics/displaylists",
+    "//Source/WebCore/platform/graphics/filters",
+    "//Source/WebCore/platform/graphics/filters/software",
+    "//Source/WebCore/platform/graphics/controls",
+    "//Source/WebCore/platform/graphics/iso",
+    "//Source/WebCore/platform/graphics/opentype",
+    "//Source/WebCore/platform/graphics/transforms",
+    "//Source/WebCore/platform/mediacapabilities",
+    "//Source/WebCore/platform/mediarecorder",
+    "//Source/WebCore/platform/mediastream",
+    "//Source/WebCore/platform/mediarecorder",
+    "//Source/WebCore/platform/mock",
+    "//Source/WebCore/platform/mock/mediasource",
+    "//Source/WebCore/platform/network",
+    "//Source/WebCore/platform/sql",
+    "//Source/WebCore/platform/text",
+    "//Source/WebCore/platform/xr",
+    "//Source/WebCore/plugins",
+    "//Source/WebCore/rendering",
+    "//Source/WebCore/rendering/line",
+    "//Source/WebCore/rendering/mathml",
+    "//Source/WebCore/rendering/shapes",
+    "//Source/WebCore/rendering/style",
+    "//Source/WebCore/rendering/svg",
+    "//Source/WebCore/rendering/svg/legacy",
+    "//Source/WebCore/rendering/updating",
+    "//Source/WebCore/replay",
+    "//Source/WebCore/storage",
+    "//Source/WebCore/style",
+    "//Source/WebCore/svg",
+    "//Source/WebCore/svg/animation",
+    "//Source/WebCore/svg/graphics",
+    "//Source/WebCore/svg/graphics/filters",
+    "//Source/WebCore/svg/properties",
+    "//Source/WebCore/websockets",
+    "//Source/WebCore/workers",
+    "//Source/WebCore/workers/service",
+    "//Source/WebCore/workers/service/background-fetch",
+    "//Source/WebCore/workers/service/context",
+    "//Source/WebCore/workers/service/server",
+    "//Source/WebCore/workers/shared",
+    "//Source/WebCore/workers/shared/context",
+    "//Source/WebCore/worklets",
+    "//Source/WebCore/xml",
+    "//Source/WebCore/xml/parser",
+  ]
+
+  deps = [
+    ":builtins_sources",
+    ":event",
+    ":event_names",
+    ":event_target",
+    ":font_names",
+    ":html",
+    ":math_ml",
+    ":namespace",
+    ":node_name",
+    ":svg",
+    ":tag_name",
+    ":web_core_bindings",
+    ":web_core_js_builtins",
+    ":x_link",
+    ":xml",
+    ":xmlns",
+    "//Source/JavaScriptCore:jsc",
+    "//Source/ThirdParty/skia",
+    "//Source/WTF/wtf",
+    "//Source/WebCore/PAL:pal",
+  ]
+
+  if (enable_gamepad) {
+    sources += [
+      "Modules/gamepad/Gamepad.cpp",
+      "Modules/gamepad/GamepadButton.cpp",
+      "Modules/gamepad/GamepadEvent.cpp",
+      "Modules/gamepad/GamepadHapticActuator.cpp",
+      "Modules/gamepad/GamepadManager.cpp",
+      "Modules/gamepad/NavigatorGamepad.cpp",
+      "platform/gamepad/EmptyGamepadProvider.cpp",
+      "platform/gamepad/GamepadProvider.cpp",
+    ]
+  }
+
+  if (enable_legacy_encrypted_media) {
+    sources += [
+      "Modules/encryptedmedia/legacy/LegacyCDM.cpp",
+      "Modules/encryptedmedia/legacy/LegacyCDMPrivateClearKey.cpp",
+      "Modules/encryptedmedia/legacy/LegacyCDMPrivateMediaPlayer.cpp",
+      "Modules/encryptedmedia/legacy/LegacyCDMSessionClearKey.cpp",
+      "Modules/encryptedmedia/legacy/WebKitMediaKeyMessageEvent.cpp",
+      "Modules/encryptedmedia/legacy/WebKitMediaKeyNeededEvent.cpp",
+      "Modules/encryptedmedia/legacy/WebKitMediaKeySession.cpp",
+      "Modules/encryptedmedia/legacy/WebKitMediaKeys.cpp",
+    ]
+  }
+
+  if (enable_encrypted_media) {
+    sources += [
+      "Modules/encryptedmedia/CDM.cpp",
+      "Modules/encryptedmedia/InitDataRegistry.cpp",
+      "Modules/encryptedmedia/MediaKeyMessageEvent.cpp",
+      "Modules/encryptedmedia/MediaKeySession.cpp",
+      "Modules/encryptedmedia/MediaKeyStatusMap.cpp",
+      "Modules/encryptedmedia/MediaKeySystemAccess.cpp",
+      "Modules/encryptedmedia/MediaKeySystemController.cpp",
+      "Modules/encryptedmedia/MediaKeySystemRequest.cpp",
+      "Modules/encryptedmedia/MediaKeys.cpp",
+      "Modules/encryptedmedia/NavigatorEME.cpp",
+      "html/MediaEncryptedEvent.cpp",
+    ]
+
+    include_dirs += [ "platform/encryptedmedia/clearkey" ]
+  }
+
+  if (enable_webgl) {
+    sources += [
+      "html/canvas/ANGLEInstancedArrays.cpp",
+      "html/canvas/EXTBlendMinMax.cpp",
+      "html/canvas/EXTClipControl.cpp",
+      "html/canvas/EXTColorBufferFloat.cpp",
+      "html/canvas/EXTColorBufferHalfFloat.cpp",
+      "html/canvas/EXTConservativeDepth.cpp",
+      "html/canvas/EXTDepthClamp.cpp",
+      "html/canvas/EXTDisjointTimerQuery.cpp",
+      "html/canvas/EXTDisjointTimerQueryWebGL2.cpp",
+      "html/canvas/EXTFloatBlend.cpp",
+      "html/canvas/EXTFragDepth.cpp",
+      "html/canvas/EXTPolygonOffsetClamp.cpp",
+      "html/canvas/EXTRenderSnorm.cpp",
+      "html/canvas/EXTShaderTextureLOD.cpp",
+      "html/canvas/EXTTextureCompressionBPTC.cpp",
+      "html/canvas/EXTTextureCompressionRGTC.cpp",
+      "html/canvas/EXTTextureFilterAnisotropic.cpp",
+      "html/canvas/EXTTextureMirrorClampToEdge.cpp",
+      "html/canvas/EXTTextureNorm16.cpp",
+      "html/canvas/EXTsRGB.cpp",
+      "html/canvas/KHRParallelShaderCompile.cpp",
+      "html/canvas/NVShaderNoperspectiveInterpolation.cpp",
+      "html/canvas/OESDrawBuffersIndexed.cpp",
+      "html/canvas/OESElementIndexUint.cpp",
+      "html/canvas/OESFBORenderMipmap.cpp",
+      "html/canvas/OESSampleVariables.cpp",
+      "html/canvas/OESShaderMultisampleInterpolation.cpp",
+      "html/canvas/OESStandardDerivatives.cpp",
+      "html/canvas/OESTextureFloat.cpp",
+      "html/canvas/OESTextureFloatLinear.cpp",
+      "html/canvas/OESTextureHalfFloat.cpp",
+      "html/canvas/OESTextureHalfFloatLinear.cpp",
+      "html/canvas/OESVertexArrayObject.cpp",
+      "html/canvas/WebGL2RenderingContext.cpp",
+      "html/canvas/WebGLBlendFuncExtended.cpp",
+      "html/canvas/WebGLBuffer.cpp",
+      "html/canvas/WebGLClipCullDistance.cpp",
+      "html/canvas/WebGLColorBufferFloat.cpp",
+      "html/canvas/WebGLCompressedTextureASTC.cpp",
+      "html/canvas/WebGLCompressedTextureETC.cpp",
+      "html/canvas/WebGLCompressedTextureETC1.cpp",
+      "html/canvas/WebGLCompressedTexturePVRTC.cpp",
+      "html/canvas/WebGLCompressedTextureS3TC.cpp",
+      "html/canvas/WebGLCompressedTextureS3TCsRGB.cpp",
+      "html/canvas/WebGLContextEvent.cpp",
+      "html/canvas/WebGLDebugRendererInfo.cpp",
+      "html/canvas/WebGLDebugShaders.cpp",
+      "html/canvas/WebGLDefaultFramebuffer.cpp",
+      "html/canvas/WebGLDepthTexture.cpp",
+      "html/canvas/WebGLDrawBuffers.cpp",
+      "html/canvas/WebGLDrawInstancedBaseVertexBaseInstance.cpp",
+      "html/canvas/WebGLFramebuffer.cpp",
+      "html/canvas/WebGLLoseContext.cpp",
+      "html/canvas/WebGLMultiDraw.cpp",
+      "html/canvas/WebGLMultiDrawInstancedBaseVertexBaseInstance.cpp",
+      "html/canvas/WebGLObject.cpp",
+      "html/canvas/WebGLPolygonMode.cpp",
+      "html/canvas/WebGLProgram.cpp",
+      "html/canvas/WebGLProvokingVertex.cpp",
+      "html/canvas/WebGLQuery.cpp",
+      "html/canvas/WebGLRenderSharedExponent.cpp",
+      "html/canvas/WebGLRenderbuffer.cpp",
+      "html/canvas/WebGLRenderingContext.cpp",
+      "html/canvas/WebGLRenderingContextBase.cpp",
+      "html/canvas/WebGLSampler.cpp",
+      "html/canvas/WebGLShader.cpp",
+      "html/canvas/WebGLShaderPrecisionFormat.cpp",
+      "html/canvas/WebGLStencilTexturing.cpp",
+      "html/canvas/WebGLSync.cpp",
+      "html/canvas/WebGLTexture.cpp",
+      "html/canvas/WebGLTimerQueryEXT.cpp",
+      "html/canvas/WebGLTransformFeedback.cpp",
+      "html/canvas/WebGLUniformLocation.cpp",
+      "html/canvas/WebGLUtilities.cpp",
+      "html/canvas/WebGLVertexArrayObject.cpp",
+      "html/canvas/WebGLVertexArrayObjectBase.cpp",
+      "html/canvas/WebGLVertexArrayObjectOES.cpp",
+      "platform/graphics/FormatConverter.cpp",
+      "platform/graphics/angle/ANGLEUtilities.cpp",
+      "platform/graphics/angle/GraphicsContextGLANGLE.cpp",
+    ]
+    # deps += [
+    #   "//Source/ThirdParty/ANGLE:libEGL",
+    #   "//Source/ThirdParty/ANGLE:libGLESv2",
+    # ]
+  } else if (use_angle_egl) {
+    include_dirs += [ "platform/graphics/opengl" ]
+  }
+
+  if (enable_user_message_handlers) {
+    sources += [
+      "page/UserMessageHandler.cpp",
+      "page/UserMessageHandlerDescriptor.cpp",
+      "page/UserMessageHandlersNamespace.cpp",
+      "page/WebKitNamespace.cpp",
+    ]
+  }
+
+  if (use_lcms) {
+    include_dirs += [ "platform/graphics/lcms" ]
+  }
+
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [ "//build/config/compiler:no_chromium_code" ]
+}

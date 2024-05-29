@@ -1,0 +1,155 @@
+import("//build/config/perl/perl.gni")
+
+declare_args() {
+  use_theme_adwaita = false
+}
+
+builtins_sources = [
+  "Modules/compression/CompressionStream.js",
+  "Modules/compression/DecompressionStream.js",
+  "Modules/streams/ByteLengthQueuingStrategy.js",
+  "Modules/streams/CountQueuingStrategy.js",
+  "Modules/streams/ReadableByteStreamController.js",
+  "Modules/streams/ReadableByteStreamInternals.js",
+  "Modules/streams/ReadableStreamBYOBReader.js",
+  "Modules/streams/ReadableStreamBYOBRequest.js",
+  "Modules/streams/ReadableStreamDefaultController.js",
+  "Modules/streams/ReadableStreamDefaultReader.js",
+  "Modules/streams/ReadableStreamInternals.js",
+  "Modules/streams/StreamInternals.js",
+  "Modules/streams/TransformStreamDefaultController.js",
+  "Modules/streams/TransformStreamInternals.js",
+  "Modules/streams/WritableStreamDefaultController.js",
+  "Modules/streams/WritableStreamDefaultWriter.js",
+  "Modules/streams/WritableStreamInternals.js",
+  "bindings/js/JSDOMBindingInternals.js",
+  "dom/TextDecoderStream.js",
+  "dom/TextEncoderStream.js",
+  "inspector/CommandLineAPIModuleSource.js",
+]
+
+scripts_bindings = [
+  "bindings/scripts/CodeGenerator.pm",
+  "bindings/scripts/CodeGeneratorJS.pm",
+  "bindings/scripts/IDLParser.pm",
+  "bindings/scripts/InFilesParser.pm",
+  "bindings/scripts/preprocessor.pm",
+]
+
+make_names_dependencies = [
+  "bindings/scripts/Hasher.pm",
+  "bindings/scripts/StaticString.pm",
+]
+
+template("generate_dom_names") {
+  perl(target_name) {
+    forward_variables_from(invoker, [ "deps" ])
+
+    script = "dom/make_names.pl"
+
+    inputs = [ invoker.attrs_file ] + scripts_bindings + make_names_dependencies
+
+    args = [
+      "--outputDir",
+      rebase_path(target_gen_dir, root_build_dir),
+      "--attrs",
+      rebase_path(invoker.attrs_file, root_build_dir),
+    ]
+
+    outputs = [
+      "$target_gen_dir/${invoker.namespace}Names.cpp",
+      "$target_gen_dir/${invoker.namespace}Names.h",
+    ]
+
+    if (defined(invoker.elements_file)) {
+      inputs += [ invoker.elements_file ]
+      args += [
+        "--elements",
+        rebase_path(invoker.elements_file, root_build_dir),
+        "--factory",
+        "--wrapperFactory",
+      ]
+
+      outputs += [
+        "$target_gen_dir/${invoker.namespace}ElementFactory.cpp",
+        "$target_gen_dir/${invoker.namespace}ElementFactory.h",
+        "$target_gen_dir/${invoker.namespace}ElementTypeHelpers.h",
+        "$target_gen_dir/JS${invoker.namespace}ElementWrapperFactory.cpp",
+        "$target_gen_dir/JS${invoker.namespace}ElementWrapperFactory.h",
+      ]
+    }
+  }
+}
+
+template("generate_event_factory") {
+  perl(target_name) {
+    forward_variables_from(invoker, [ "deps" ])
+
+    script = "dom/make_event_factory.pl"
+
+    inputs = [ invoker.infile ] + scripts_bindings
+
+    args = [
+      "--input",
+      rebase_path(invoker.infile, root_build_dir),
+      "--outputDir",
+      rebase_path(target_gen_dir, root_build_dir),
+    ]
+
+    outputs = [
+      "$target_gen_dir/${invoker.namespace}Factory.cpp",
+      "$target_gen_dir/${invoker.namespace}Interfaces.h",
+    ]
+  }
+}
+
+template("generate_dom_name_enum") {
+  perl(target_name) {
+    forward_variables_from(invoker, [ "deps" ])
+
+    script = "dom/make_names.pl"
+
+    elements = [
+      "html/HTMLTagNames.in",
+      "svg/svgtags.in",
+      "mathml/mathtags.in",
+    ]
+
+    attrs = [
+      "html/HTMLAttributeNames.in",
+      "mathml/mathattrs.in",
+      "svg/svgattrs.in",
+      "svg/xlinkattrs.in",
+      "xml/xmlattrs.in",
+      "xml/xmlnsattrs.in",
+    ]
+
+    inputs = elements + attrs + scripts_bindings + make_names_dependencies
+
+    args = [
+      "--outputDir",
+      rebase_path(target_gen_dir, root_build_dir),
+      "--enum",
+      invoker.enum,
+    ]
+
+    foreach(element, elements) {
+      args += [
+        "--elements",
+        rebase_path(element, root_build_dir),
+      ]
+    }
+
+    foreach(attr, attrs) {
+      args += [
+        "--attrs",
+        rebase_path(attr, root_build_dir),
+      ]
+    }
+
+    outputs = [
+      "$target_gen_dir/${invoker.enum}.cpp",
+      "$target_gen_dir/${invoker.enum}.h",
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+import("//build/config/linux/gtk/gtk.gni")
+import("//build/config/linux/pkg_config.gni")
+
+pal_public_headers = [ "pal/ExportMacros.h" ]
+
+copy("headers") {
+  sources = pal_public_headers
+  outputs = [ "$root_gen_dir/pal/{{source_file_part}}" ]
+}
+
+source_set("pal") {
+  sources = [
+    "pal/ExportMacros.h",
+    "pal/FileSizeFormatter.h",
+    "pal/Gunzip.h",
+    "pal/HysteresisActivity.h",
+    "pal/Logging.h",
+    "pal/SessionID.h",
+    "pal/ThreadGlobalData.h",
+    "pal/crypto/CryptoDigest.h",
+    "pal/FileSizeFormatter.cpp",
+    "pal/Logging.cpp",
+    "pal/SessionID.cpp",
+    "pal/ThreadGlobalData.cpp",
+    "pal/system/Clock.h",
+    "pal/system/ClockGeneric.h",
+    "pal/system/SleepDisabler.cpp",
+    "pal/system/SleepDisabler.h",
+    "pal/system/Sound.h",
+    "pal/system/SystemSleepListener.cpp",
+    "pal/system/SystemSleepListener.h",
+    "pal/text/DecodeEscapeSequences.h",
+    "pal/text/EncodingTables.cpp",
+    "pal/text/EncodingTables.h",
+    "pal/text/KillRing.h",
+    "pal/text/TextCodec.cpp",
+    "pal/text/TextCodec.h",
+    "pal/text/TextCodecASCIIFastPath.h",
+    "pal/text/TextCodecCJK.cpp",
+    "pal/text/TextCodecCJK.h",
+    "pal/text/TextCodecICU.cpp",
+    "pal/text/TextCodecICU.h",
+    "pal/text/TextCodecLatin1.cpp",
+    "pal/text/TextCodecLatin1.h",
+    "pal/text/TextCodecReplacement.cpp",
+    "pal/text/TextCodecReplacement.h",
+    "pal/text/TextCodecSingleByte.cpp",
+    "pal/text/TextCodecSingleByte.h",
+    "pal/text/TextCodecUTF16.cpp",
+    "pal/text/TextCodecUTF16.h",
+    "pal/text/TextCodecUTF8.cpp",
+    "pal/text/TextCodecUTF8.h",
+    "pal/text/TextCodecUserDefined.cpp",
+    "pal/text/TextCodecUserDefined.h",
+    "pal/text/TextEncoding.cpp",
+    "pal/text/TextEncoding.h",
+    "pal/text/TextEncodingDetector.h",
+    "pal/text/TextEncodingDetectorICU.cpp",
+    "pal/text/TextEncodingRegistry.cpp",
+    "pal/text/TextEncodingRegistry.h",
+    "pal/text/UnencodableHandling.h",
+  ]
+
+  include_dirs = [
+    "//Source/WebCore/PAL",
+    "//Source/WebCore/PAL/pal",
+    "//Source/WebCore/PAL/pal/crypto",
+    "//Source/WebCore/PAL/pal/system",
+    "//Source/WebCore/PAL/pal/text",
+  ]
+
+  deps = [
+    ":headers",
+    "//Source/WTF/wtf",
+  ]
+
+  defines = [ "BUILDING_PAL" ]
+
+  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs += [ "//build/config/compiler:no_chromium_code" ]
+
+  if (is_linux) {
+    sources += [
+      "pal/crypto/openssl/CryptoDigestOpenSSL.cpp",
+      "pal/system/ClockGeneric.cpp",
+      "pal/system/glib/SleepDisablerGLib.cpp",
+      "pal/system/glib/SleepDisablerGLib.h",
+      "pal/text/KillRing.cpp",
+      "pal/unix/LoggingUnix.cpp",
+    ]
+
+    if (use_gtk) {
+      sources += [ "pal/system/gtk/SoundGtk.cpp" ]
+
+      deps += [ "//build/config/linux/gtk" ]
+    } else {
+      sources += [ "pal/system/gtk/Sound.cpp" ]
+    }
+
+    deps += [ "//third_party/boringssl" ]
+  }
+}

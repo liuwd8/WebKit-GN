@@ -158,7 +158,6 @@ buildflag_header("cmake_buildflags") {
     "HAVE_STD_REMOVE_CVREF=1",
     "WTF_PLATFORM_GTK=$use_gtk",
     "WTF_PLATFORM_WPE=$is_wpe",
-
     "ENABLE_ACCESSIBILITY_ISOLATED_TREE=$enable_accessibility_isolated_tree",
     "ENABLE_API_TESTS=$enable_api_tests",
     "ENABLE_APPLE_PAY=$enable_apple_pay",

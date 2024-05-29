@@ -390,7 +390,7 @@ declare_args() {
   use_jpegxl = true
 
   # Whether to use Skia instead of Cairo.
-  use_skia = false
+  use_skia = use_gtk
 
   # Toggle system allocator instead of WebKit's custom allocator
   use_system_malloc =
@@ -401,8 +401,6 @@ declare_args() {
 
   # Toggle support for WOFF2 Web Fonts through libwoff2
   use_woff2 = true
-
-  use_skia = true
 
   # Whether to enable support for GStreamer GL
   use_gstreamer_gl = use_gtk

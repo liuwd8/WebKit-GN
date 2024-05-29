@@ -1,0 +1,7 @@
+webcore_sources = exec_script("//build/cmake_sources_reader.py",
+                              [ rebase_path("Sources.txt", root_build_dir) ],
+                              "trim list lines")
+
+foreach(file, webcore_sources) {
+  assert(file != "")
+}

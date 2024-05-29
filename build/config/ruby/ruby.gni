@@ -1,5 +1,5 @@
 declare_args() {
-  ruby_path = rebase_path("/usr/bin/ruby", root_build_dir)
+  ruby_path = "/usr/bin/ruby"
 }
 
 template("ruby") {
